@@ -1,163 +1,221 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
 
-export default function App() {
+function App() {
   const [posts, setPosts] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editPost, setEditPost] = useState(null);
-  const [postForm, setPostForm] = useState({ title: "", content: "" });
+
+  // pagination + search + filtering
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+
+  // create post form state
+  const [showForm, setShowForm] = useState(false);
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    category: "",
+  });
+
+  const fetchPosts = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/posts", {
+        params: {
+          page,
+          limit: 5,
+          search,
+          category,
+        },
+      });
+
+      setPosts(res.data.posts);
+      setPages(res.data.pages);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [page, category]);
 
-  const fetchPosts = async () => {
-    const res = await axios.get("http://localhost:5000/api/posts");
-    setPosts(res.data);
-  };
-
-  const handleCreate = async (e) => {
+  // create post handler
+  const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!postForm.title || !postForm.content) return alert("All fields required");
-    await axios.post("http://localhost:5000/api/posts", postForm);
-    setPostForm({ title: "", content: "" });
-    setShowModal(false);
-    fetchPosts();
-  };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this post?")) return;
-    await axios.delete(`http://localhost:5000/api/posts/${id}`);
-    fetchPosts();
-  };
+    try {
+      await axios.post("http://localhost:5000/api/posts", newPost);
 
-  const handleEdit = (post) => {
-    setEditPost(post);
-    setPostForm({ title: post.title, content: post.content });
-    setShowModal(true);
-  };
+      // reset form
+      setNewPost({ title: "", content: "", category: "" });
+      setShowForm(false);
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    await axios.put(`http://localhost:5000/api/posts/${editPost._id}`, postForm);
-    setEditPost(null);
-    setShowModal(false);
-    fetchPosts();
+      // reload posts
+      fetchPosts();
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-8 py-5 border-b border-gray-700 bg-gray-900/70 backdrop-blur-md sticky top-0 z-50">
-        <h1 className="text-2xl font-bold text-blue-400">📰 MERN Blog</h1>
-        <button
-          onClick={() => {
-            setEditPost(null);
-            setPostForm({ title: "", content: "" });
-            setShowModal(true);
-          }}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition"
-        >
-          ➕ Create Post
-        </button>
-      </nav>
+    <div className="min-h-screen bg-gray-900 text-white px-8 py-10">
 
-      {/* Posts */}
-      <main className="px-6 py-10 max-w-6xl mx-auto">
-        {posts.length === 0 ? (
-          <p className="text-center text-gray-400 text-lg">No posts yet.</p>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <AnimatePresence>
-              {posts.map((post) => (
-                <motion.div
-                  key={post._id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  whileHover={{ scale: 1.03 }}
-                  className="bg-gray-800/70 border border-gray-700 rounded-2xl p-6 shadow-xl"
-                >
-                  <h2 className="text-xl font-semibold mb-3 text-blue-400">
-                    {post.title}
-                  </h2>
-                  <p className="text-gray-300 mb-4">{post.content}</p>
-                  <p className="text-sm text-gray-500 mb-4">
-                    🕓 {new Date(post.createdAt).toLocaleString()}
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleEdit(post)}
-                      className="px-3 py-1 bg-yellow-500/80 hover:bg-yellow-600 rounded-lg text-sm font-semibold"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post._id)}
-                      className="px-3 py-1 bg-red-500/80 hover:bg-red-600 rounded-lg text-sm font-semibold"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </main>
+      <h1 className="text-3xl font-bold mb-6">MERN Blog</h1>
 
-      {/* Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      {/* top bar */}
+      <div className="flex justify-between items-center mb-6">
+
+        {/* search + filter row */}
+        <div className="flex gap-4 items-center">
+
+          <input
+            className="px-3 py-2 rounded bg-gray-800 border border-gray-700"
+            placeholder="Search posts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            className="px-3 py-2 rounded bg-gray-800 border border-gray-700"
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setPage(1);
+            }}
           >
-            <motion.form
-              onSubmit={editPost ? handleUpdate : handleCreate}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-gray-900 border border-gray-700 p-8 rounded-2xl w-96 shadow-lg"
-            >
-              <h2 className="text-xl font-bold mb-4 text-blue-400">
-                {editPost ? "✏️ Edit Post" : "➕ New Post"}
-              </h2>
+            <option value="">All Categories</option>
+            <option value="tech">Tech</option>
+            <option value="news">News</option>
+            <option value="sports">Sports</option>
+          </select>
+
+          <button
+            onClick={() => {
+              setPage(1);
+              fetchPosts();
+            }}
+            className="px-4 py-2 bg-blue-600 rounded"
+          >
+            Search
+          </button>
+        </div>
+
+        {/* create button */}
+        <button
+          onClick={() => setShowForm(true)}
+          className="px-4 py-2 bg-green-600 rounded"
+        >
+          + New Post
+        </button>
+      </div>
+
+      {/* posts list */}
+      <div className="space-y-4">
+        {posts.length === 0 && <p>No posts found.</p>}
+
+        {posts.map((post) => (
+          <div
+            key={post._id}
+            className="bg-gray-800 rounded p-4 border border-gray-700"
+          >
+            <h2 className="text-xl font-semibold">{post.title}</h2>
+            <p className="text-gray-300">{post.content}</p>
+            <p className="text-sm text-gray-400 mt-2">
+              Category: {post.category || "none"}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* pagination */}
+      <div className="flex justify-center gap-4 mt-8">
+
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className="px-4 py-2 bg-gray-700 rounded disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        <span>
+          Page {page} of {pages}
+        </span>
+
+        <button
+          disabled={page === pages}
+          onClick={() => setPage(page + 1)}
+          className="px-4 py-2 bg-gray-700 rounded disabled:opacity-40"
+        >
+          Next
+        </button>
+
+      </div>
+
+      {/* CREATE POST MODAL */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
+          <div className="bg-gray-800 p-6 rounded-lg w-[420px]">
+
+            <h2 className="text-xl font-semibold mb-4">Create New Post</h2>
+
+            <form onSubmit={handleCreatePost} className="space-y-3">
+
               <input
-                type="text"
+                className="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700"
                 placeholder="Title"
-                value={postForm.title}
-                onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
-                className="w-full mb-3 px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={newPost.title}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, title: e.target.value })
+                }
+                required
               />
+
               <textarea
+                className="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700"
                 placeholder="Content"
-                value={postForm.content}
-                onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
-                className="w-full mb-4 px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 h-24"
-              ></textarea>
-              <div className="flex justify-end gap-3">
+                rows="4"
+                value={newPost.content}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, content: e.target.value })
+                }
+                required
+              />
+
+              <input
+                className="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700"
+                placeholder="Category"
+                value={newPost.category}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, category: e.target.value })
+                }
+              />
+
+              <div className="flex justify-end gap-3 mt-2">
+
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+                  onClick={() => setShowForm(false)}
+                  className="px-3 py-2 bg-gray-600 rounded"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold"
+                  className="px-3 py-2 bg-green-600 rounded"
                 >
-                  {editPost ? "Update" : "Save"}
+                  Save
                 </button>
               </div>
-            </motion.form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default App;

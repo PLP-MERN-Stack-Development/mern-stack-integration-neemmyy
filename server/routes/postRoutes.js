@@ -1,50 +1,41 @@
 import express from "express";
+import { getPosts } from "../controllers/postController.js";
 import Post from "../models/Post.js";
 
 const router = express.Router();
 
-// GET all posts
-router.get("/", async (req, res) => {
-  try {
-    const posts = await Post.find().sort({ createdAt: -1 });
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// pagination + search route
+router.get("/", getPosts);
 
-// CREATE a post
+// create post
 router.post("/", async (req, res) => {
   try {
-    const post = await Post.create(req.body);
-    res.json(post);
+    const post = new Post(req.body);
+    const saved = await post.save();
+    res.json(saved);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
 });
 
-// UPDATE a post
+// get single
+router.get("/:id", async (req, res) => {
+  const post = await Post.findById(req.params.id);
+  res.json(post);
+});
+
+// update
 router.put("/:id", async (req, res) => {
-  try {
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(post);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const updated = await Post.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  res.json(updated);
 });
 
-// DELETE a post
+// delete
 router.delete("/:id", async (req, res) => {
-  try {
-    await Post.findByIdAndDelete(req.params.id);
-    res.json({ message: "Post deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  await Post.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
 
 export default router;
