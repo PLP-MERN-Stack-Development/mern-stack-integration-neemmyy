@@ -1,4 +1,4 @@
-# MERN Blog ⚡
+# MERN Blog 
 
 **A simple MERN (MongoDB, Express, React, Node) blog application** with a Vite-powered React client and an Express/MongoDB backend.
 
@@ -38,7 +38,7 @@
 
 ---
 
-## Tech Stack 🧰
+## Tech Stack 
 
 - Frontend: React + Vite, Tailwind CSS (optional)
 - Backend: Node.js, Express
@@ -65,7 +65,7 @@
 
 ---
 
-## Prerequisites ⚠️
+## Prerequisites 
 
 - Node.js v16+ (recommended)
 - npm or yarn
@@ -73,7 +73,7 @@
 
 ---
 
-## Environment Variables 🔒
+## Environment Variables 
 
 Create a `.env` file in the `server/` folder with the following values:
 
@@ -104,7 +104,7 @@ npm install
 
 ---
 
-## Running the App ▶️
+## Running the App 
 
 Development (two terminals):
 
@@ -149,7 +149,7 @@ Responses are returned as JSON. See `server/routes/postRoutes.js` and `server/co
 
 ---
 
-## Development Tips 💡
+## Development Tips 
 
 - Use `npx nodemon server.js` for automatic server restarts while developing.
 - Add validation and authentication when expanding beyond prototype scope.
@@ -157,7 +157,7 @@ Responses are returned as JSON. See `server/routes/postRoutes.js` and `server/co
 
 ---
 
-## Contributing 🤝
+## Contributing 
 
 1. Fork the repository
 2. Create a branch: `git checkout -b feat/my-feature`
