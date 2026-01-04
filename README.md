@@ -30,7 +30,7 @@
 
 ---
 
-## Features ✅
+## Features 
 
 - Create, read, update, delete (CRUD) blog posts
 - Pagination and search on the posts listing
